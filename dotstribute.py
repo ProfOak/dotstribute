@@ -16,14 +16,6 @@ def main():
     if options.dot_exclude:
         dotexclude = options.dot_exclude
 
-    # prepare list of files not to link to $HOME
-    EXCLUDE = []
-    if os.path.exists(dotexclude):
-        with open(dotexclude) as f:
-            EXCLUDE = f.read().split()
-    # still never add the .dotexclude file to $HOME
-    EXCLUDE.append(dotexclude)
-
     # get files not in exclude list
     git_dir = "."
     if len(args) == 1:
@@ -35,6 +27,19 @@ def main():
             if raw_input("> ").lower() != "y":
                 print "Now exiting"
                 return
+
+    # use the .dotexclude file IN the git directory, not in cwd
+    exclude_file = dotexclude
+    if git_dir != ".":
+        exclude_file = git_dir + dotexclude
+
+    # prepare list of files not to link to $HOME
+    EXCLUDE = []
+    if os.path.exists(exclude_file):
+        with open(git_dir + dotexclude) as f:
+            EXCLUDE = f.read().split()
+    # still never add the .dotexclude file to $HOME
+    EXCLUDE.append(dotexclude)
 
     files = [f for f in os.listdir(git_dir) if f not in EXCLUDE]
 
@@ -56,7 +61,6 @@ def main():
             print "skipping", f
 
         # add option: chmod symlink
-
 
 if __name__ == "__main__":
     main()
