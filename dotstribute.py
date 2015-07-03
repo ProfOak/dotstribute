@@ -26,14 +26,15 @@ def main():
 
     # get files not in exclude list
     git_dir = "."
-    if len(args) == 1 and os.path.exists(args[0]):
-        git_dir = args[0]
-    elif not os.path.exists(args[0]):
-        print "That directory doesnot exist"
-        print "Use the current working directory? (y/N)"
-        if raw_input("> ").lower() != "y":
-            print "Now exiting"
-            return
+    if len(args) == 1:
+        if os.path.exists(args[0]):
+            git_dir = args[0]
+        elif not os.path.exists(args[0]):
+            print "That directory does not exist"
+            print "Use the current working directory? (y/N)"
+            if raw_input("> ").lower() != "y":
+                print "Now exiting"
+                return
 
     files = [f for f in os.listdir(git_dir) if f not in EXCLUDE]
 
@@ -45,15 +46,17 @@ def main():
         to += f
 
         # for correct symlinking
-        f = os.path.abspath(f)
+        f = os.getcwd() + "/" + git_dir + f
 
         # add option: replace (ask)
         # add option: force replace (no ask)
-        # add option: chmod symlink
         if not os.path.exists(to):
             os.symlink(f, to)
         else:
             print "skipping", f
+
+        # add option: chmod symlink
+
 
 if __name__ == "__main__":
     main()
