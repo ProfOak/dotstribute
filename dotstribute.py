@@ -10,37 +10,61 @@ class Dot():
         # use the .dotignore file IN the git directory, not in cwd
         ignore_file = dotignore
         if self.git_dir != ".":
-            ignore__file = self.git_dir + dotignore
+            ignore_file = self.git_dir + "/" + dotignore
 
-        # prepare list of files not to link to $HOME
+        # prepare list of files NOT to link to $HOME
         IGNORE = []
         if os.path.exists(ignore_file):
-            with open(ignore_file) as ef:
-                IGNORE = ef.read().split()
+            with open(ignore_file) as f:
+                IGNORE = f.read().split()
         # still never add the .dotignore file to $HOME
         IGNORE.append(dotignore)
 
-        self.files = [f for f in os.listdir(self.git_dir) if f not in IGNORE]
+        # compile a list of full paths to begin with
+        # this will make other operations much simpler
+        self.git_links  = []
+        self.home_links = []
 
-    def link(self):
-        # by default place dotfiles in your $HOME
-        for f in self.files:
+        for f in os.listdir(self.git_dir):
+            if f in IGNORE:
+                continue
+
+            # by default place dotfiles in your $HOME
             to = os.environ["HOME"] + "/"
             if not f.startswith("."):
                 to += "."
             to += f
 
             # for correct symlinking
-            f = os.getcwd() + "/" + self.git_dir + f
+            # of the form /this/path/to/file
+            tmp_dir = self.git_dir
+            if tmp_dir == ".":
+                tmp_dir = ""
+            # don't trust user input
+            if not tmp_dir.endswith("/"):
+                tmp_dir += "/"
 
+            f = os.getcwd() + "/" + tmp_dir + f
+            self.git_links.append(f)
+            self.home_links.append(to)
+
+    def link(self):
+        for i, f in enumerate(self.git_links):
             # add option: replace (ask)
             # add option: force replace (no ask)
-            if not os.path.exists(to):
-                os.symlink(f, to)
+            if not os.path.exists(self.home_links[i]):
+                os.symlink(f, self.home_links[i])
             else:
                 print "skipping", f
 
-            # add option: chmod symlink
+    def unlink(self):
+        for f in self.home_links:
+            if os.path.exists(f):
+                os.unlink(f)
+            else:
+                print "Does not exist:", f
+
+    # add option: chmod symlinked files
 
 def main():
     parser = OptionParser()
@@ -69,7 +93,10 @@ def main():
 
     d = Dot(git_dir)
     d.get_files(".dotignore")
-    d.link()
+    if options.unlink:
+        d.unlink()
+    else:
+        d.link()
 
 
 if __name__ == "__main__":
