@@ -5,4 +5,4 @@ Dotstribute
 
 ####This makes it easy to manage, and backup
 
-![](https://raw.githubusercontent.com/ProfOak/dotstribute/media/example.png)
+![](https://raw.githubusercontent.com/ProfOak/dotstribute/master/media/example.png)
