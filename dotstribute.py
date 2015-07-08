@@ -13,6 +13,7 @@ class Dot():
             ignore_file = self.git_dir + "/" + dotignore
 
         # prepare list of files NOT to link to $HOME
+        # based on the contents of the .dotignore file
         IGNORE = []
         if os.path.exists(ignore_file):
             with open(ignore_file) as f:
@@ -40,63 +41,82 @@ class Dot():
             tmp_dir = self.git_dir
             if tmp_dir == ".":
                 tmp_dir = ""
+
             # don't trust user input
             if not tmp_dir.endswith("/"):
                 tmp_dir += "/"
 
             f = os.getcwd() + "/" + tmp_dir + f
+
             self.git_links.append(f)
             self.home_links.append(to)
 
-    def link(self):
+    def link(self, ask=False):
         for i, f in enumerate(self.git_links):
-            # add option: replace (ask)
-            # add option: force replace (no ask)
-            if not os.path.exists(self.home_links[i]):
+
+            # make sure to ask nicely
+            if ask and not os.path.exists(self.home_links[i]):
+                if raw_input("Link %s to home (y/N)? > " % f).lower() == "y":
+                    os.symlink(f, self.home_links[i])
+
+            elif not os.path.exists(self.home_links[i]):
                 os.symlink(f, self.home_links[i])
+
             else:
                 print "skipping", f
 
-    def unlink(self):
+    def unlink(self, ask=False):
         for f in self.home_links:
-            if os.path.exists(f):
+
+            # ask the fies if they want to be deleted
+            if ask and os.path.exists(f):
+                if raw_input("Unlink %s (y/N)? > " % f).lower() == "y":
+                    os.unlink(f)
+
+            elif os.path.exists(f):
                 os.unlink(f)
+
             else:
                 print "Does not exist:", f
 
-    # add option: chmod symlinked files
 
 def main():
     parser = OptionParser()
     parser.add_option("-d", "--dotignore", dest = "dot_ignore",
             help = "Exclude files, given by .dotignore file")
-    parser.add_option("-f", "--force", dest = "force", default = False,
-            action = "store_true", help = "Force overwrite the previous links")
+    parser.add_option("-a", "--ask", dest = "ask", default = False,
+            action = "store_true", help = "Ask if you want the " +
+            "files to be linked or unlinked")
     parser.add_option("-u", "--unlink", dest = "unlink", default = False,
             action = "store_true", help = "Remove the previous links")
 
     (options, args) = parser.parse_args()
 
+    dotignore = ".dotignore"
     if options.dot_ignore:
         dotignore = options.dot_ignore
 
+    # path to dotfiles as command line argument
     git_dir = "."
-    if len(args) == 1:
-        if os.path.exists(args[0]):
-            git_dir = args[0]
-        elif not os.path.exists(args[0]):
-            print "That directory does not exist"
-            print "Use the current working directory? (y/N)"
-            if raw_input("> ").lower() != "y":
-                print "Now exiting"
-                return
+    if len(args) == 1 and os.path.exists(args[0]):
+        git_dir = args[0]
+
+    # if the path isn't there, ask to use this dir
+    elif len(args) == 1 and not os.path.exists(args[0]):
+        print "That directory does not exist"
+        print "Use the current working directory? (y/N)"
+        if raw_input("> ").lower() != "y":
+            print "Now exiting"
+            return
 
     d = Dot(git_dir)
-    d.get_files(".dotignore")
+    d.get_files(dotignore)
+
+    # no flag == don't ask
     if options.unlink:
-        d.unlink()
+        d.unlink(options.ask)
     else:
-        d.link()
+        d.link(options.ask)
 
 
 if __name__ == "__main__":
