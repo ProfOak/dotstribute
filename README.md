@@ -23,6 +23,15 @@ Example:
 
 `./dotstribute.py -u`
 
+####-a
+Ask before linking or unlinking each file
+
+Example:
+
+```
+./dotstribute.py -a
+./dotstribute.py -au
+```
 
 
 ![Example usage](https://raw.githubusercontent.com/ProfOak/dotstribute/master/media/example.png)
