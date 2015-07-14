@@ -18,6 +18,7 @@ class Dot():
         if os.path.exists(ignore_file):
             with open(ignore_file) as f:
                 IGNORE = f.read().split()
+
         # still never add the .dotignore file to $HOME
         IGNORE.append(dotignore)
 
@@ -32,21 +33,15 @@ class Dot():
 
             # by default place dotfiles in your $HOME
             to = os.environ["HOME"] + "/"
+
+            # make them dotfiles, it they do not begin with dots
             if not f.startswith("."):
                 to += "."
             to += f
 
-            # for correct symlinking
-            # of the form /this/path/to/file
-            tmp_dir = self.git_dir
-            if tmp_dir == ".":
-                tmp_dir = ""
-
-            # don't trust user input
-            if not tmp_dir.endswith("/"):
-                tmp_dir += "/"
-
-            f = os.getcwd() + "/" + tmp_dir + f
+            # this is basically strjoin(cwd + parameter)
+            # but it doesn't end in a slash for some reason
+            f = os.path.abspath(self.git_dir) + "/" + f
 
             self.git_links.append(f)
             self.home_links.append(to)
@@ -59,6 +54,7 @@ class Dot():
                 if raw_input("Link %s to home (y/N)? > " % f).lower() == "y":
                     os.symlink(f, self.home_links[i])
 
+            # don't ask, just do
             elif not os.path.exists(self.home_links[i]):
                 os.symlink(f, self.home_links[i])
 
@@ -68,17 +64,17 @@ class Dot():
     def unlink(self, ask=False):
         for f in self.home_links:
 
-            # ask the fies if they want to be deleted
+            # ask to delete
             if ask and os.path.exists(f):
                 if raw_input("Unlink %s (y/N)? > " % f).lower() == "y":
                     os.unlink(f)
 
+            # don't ask, just do
             elif os.path.exists(f):
                 os.unlink(f)
 
             else:
                 print "Does not exist:", f
-
 
 def main():
     parser = OptionParser()
@@ -117,7 +113,6 @@ def main():
         d.unlink(options.ask)
     else:
         d.link(options.ask)
-
 
 if __name__ == "__main__":
     main()
