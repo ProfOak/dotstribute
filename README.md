@@ -7,24 +7,22 @@ This script uses an optional file called the ".dotignore" file. Create this .dot
 
 dotstribute takes an optional argument that should specify the folder your dotfiles are contained in. dotstribute will symlink the contents of that folder. If no argument is provided, dotstribute will use the current directory.
 
-####-d
-
+####-d / --dotignore
 Specify a different location for your .dotignore file
 
 example:
 
 `./dotstribute.py -d /home/user/I/put/my/file/somewhere/else/.dotignore`
 
-####-u
-
+####-u / --unlink
 Unlink (remove) the links in your home directory, based on the contents of your dotfiles folder. See example image.
 
 Example:
 
 `./dotstribute.py -u`
 
-####-a
-Ask before linking or unlinking each file
+####-a / --ask
+Ask before linking or unlinking each file.
 
 Example:
 
@@ -33,5 +31,12 @@ Example:
 ./dotstribute.py -au
 ```
 
+####-p / --preview
+Preview the changes before they happen.
+
+```
+./dotstribute.py -p
+./dotstribute.py -pu
+```
 
 ![Example usage](https://raw.githubusercontent.com/ProfOak/dotstribute/master/media/example.png)

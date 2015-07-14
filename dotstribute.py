@@ -110,7 +110,6 @@ class Dot():
         for i, f in enumerate(self.home_links):
             if unlink_preview:
                 print "* UNLINK %s \n\t<- %s" %(f, self.git_links[i])
-
             else:
                 print "* LINK: %s \n\t-> %s" %(self.git_links[i], f)
 
