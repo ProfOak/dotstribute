@@ -100,9 +100,19 @@ class Dot():
             else:
                 print "Does not exist:", f
 
-    def preview(self):
-        """ Preview the changes to be made before executing them """
-        pass
+    def preview(self, unlink_preview):
+        """
+        Preview the changes to be made before executing them.
+
+        Run get_files() first.
+        """
+
+        for i, f in enumerate(self.home_links):
+            if unlink_preview:
+                print "* UNLINK %s \n\t<- %s" %(f, self.git_links[i])
+
+            else:
+                print "* LINK: %s \n\t-> %s" %(self.git_links[i], f)
 
 def main():
     parser = OptionParser()
@@ -113,6 +123,8 @@ def main():
             "files to be linked or unlinked")
     parser.add_option("-u", "--unlink", dest = "unlink", default = False,
             action = "store_true", help = "Remove the previous links")
+    parser.add_option("-p", "--preview", dest = "preview", default = False,
+            action = "store_true", help = "Preview the actions before they happen")
 
     (options, args) = parser.parse_args()
 
@@ -136,8 +148,9 @@ def main():
     d = Dot(git_dir)
     d.get_files(dotignore)
 
-    # no flag == don't ask
-    if options.unlink:
+    if options.preview:
+        d.preview(options.unlink)
+    elif options.unlink:
         d.unlink(options.ask)
     else:
         d.link(options.ask)
