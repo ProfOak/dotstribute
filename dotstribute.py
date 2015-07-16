@@ -110,8 +110,23 @@ class Dot():
         for i, f in enumerate(self.home_links):
             if unlink_preview:
                 print "* UNLINK %s \n\t<- %s" %(f, self.git_links[i])
+
             else:
                 print "* LINK: %s \n\t-> %s" %(self.git_links[i], f)
+
+    def generate_dotignore(self, to_dir):
+        """ Generate a .dotignore file at the specified location """
+
+        to_dir = os.path.abspath(to_dir) + "/.dotignore"
+
+        if os.path.exists(to_dir) and raw_input("Replace .dotignore file (y/N)? > ").lower() != "y":
+            return
+
+        # generic files you might find in a git directory
+        IGNORE_LIST = ".git\n.gitignore\nREADME.md\nLICENSE"
+        with open(to_dir, "w") as f:
+            f.write(IGNORE_LIST)
+
 
 def main():
     parser = OptionParser()
@@ -124,6 +139,8 @@ def main():
             action = "store_true", help = "Remove the previous links")
     parser.add_option("-p", "--preview", dest = "preview", default = False,
             action = "store_true", help = "Preview the actions before they happen")
+    parser.add_option("-g", "--generate-dotignore", dest = "generate", default = False,
+            action = "store_true", help = "Generate a .dotignore file for a repository")
 
     (options, args) = parser.parse_args()
 
@@ -140,6 +157,7 @@ def main():
     elif len(args) == 1 and not os.path.exists(args[0]):
         print "That directory does not exist"
         print "Use the current working directory? (y/N)"
+
         if raw_input("> ").lower() != "y":
             print "Now exiting"
             return
@@ -147,10 +165,16 @@ def main():
     d = Dot(git_dir)
     d.get_files(dotignore)
 
-    if options.preview:
+    if options.generate:
+        d.generate_dotignore(git_dir)
+        return
+
+    elif options.preview:
         d.preview(options.unlink)
+
     elif options.unlink:
         d.unlink(options.ask)
+
     else:
         d.link(options.ask)
 
