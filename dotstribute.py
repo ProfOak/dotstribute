@@ -140,7 +140,7 @@ def main():
     parser.add_option("-p", "--preview", dest = "preview", default = False,
             action = "store_true", help = "Preview the actions before they happen")
     parser.add_option("-g", "--generate-dotignore", dest = "generate", default = False,
-            action = "store_true", help = "Generate a .dotignore file for a repository")
+            action = "store_true", help = "Generate a .dotignore file for your folder")
 
     (options, args) = parser.parse_args()
 

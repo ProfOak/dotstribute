@@ -39,4 +39,11 @@ Preview the changes before they happen.
 ./dotstribute.py -pu
 ```
 
+####-g / --generate-dotignore
+Generate a .dotignore file containing generic files you may find in a git directory, that you may not want to symlink.
+
+```
+./dotstribute -g /path/to/dotfiles
+```
+
 ![Example usage](https://raw.githubusercontent.com/ProfOak/dotstribute/master/media/example.png)
