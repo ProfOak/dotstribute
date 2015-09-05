@@ -14,7 +14,7 @@ Instalation
 ```
 $ git clone https://github.com/ProfOak/dotstribute.git
 $ cd dotstribute
-$ python setup.py install`
+$ python setup.py install
 ```
 
 Flags explained
