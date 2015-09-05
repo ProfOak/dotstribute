@@ -11,7 +11,11 @@ dotstribute takes an optional argument that should specify the folder your dotfi
 Instalation
 ===
 
-`$ python setyp.py install`
+```
+$ git clone https://github.com/ProfOak/dotstribute.git
+$ cd dotstribute
+$ python setup.py install`
+```
 
 Flags explained
 ===
