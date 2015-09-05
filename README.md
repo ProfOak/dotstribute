@@ -8,7 +8,7 @@ This script uses an optional file called the ".dotignore" file. Create this .dot
 dotstribute takes an optional argument that should specify the folder your dotfiles are contained in. dotstribute will symlink the contents of that folder. If no argument is provided, dotstribute will use the current directory.
 
 
-Instalation
+Installation
 ===
 
 ```
