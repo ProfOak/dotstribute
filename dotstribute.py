@@ -2,7 +2,7 @@
 import os
 from optparse import OptionParser
 
-class Dot():
+class Dot(object):
     def __init__(self, git_dir):
         """
         It's advised to make backups of your dotfiles so you can easily move
@@ -10,6 +10,11 @@ class Dot():
         in your home directory based on the contents of your dotfiles folder.
         """
         self.git_dir = git_dir
+
+        # compile a list of full paths to begin with
+        # this will make other operations much simpler
+        self.git_links = []
+        self.home_links = []
 
     def get_files(self, dotignore=".dotignore"):
         """
@@ -26,21 +31,16 @@ class Dot():
 
         # prepare list of files NOT to link to $HOME
         # based on the contents of the .dotignore file
-        IGNORE = []
+        ignore_files = []
         if os.path.exists(ignore_file):
             with open(ignore_file) as f:
-                IGNORE = f.read().split()
+                ignore_files = f.read().split()
 
         # still never add the .dotignore file to $HOME
-        IGNORE.append(dotignore)
-
-        # compile a list of full paths to begin with
-        # this will make other operations much simpler
-        self.git_links  = []
-        self.home_links = []
+        ignore_files.append(dotignore)
 
         for f in os.listdir(self.git_dir):
-            if f in IGNORE:
+            if f in ignore_files:
                 continue
 
             # by default place dotfiles in your $HOME
@@ -123,24 +123,40 @@ class Dot():
             return
 
         # generic files you might find in a git directory
-        IGNORE_LIST = ".git\n.gitignore\nREADME.md\nLICENSE"
+        ignore_files = ".git\n.gitignore\nREADME.md\nLICENSE"
         with open(to_dir, "w") as f:
-            f.write(IGNORE_LIST)
+            f.write(ignore_files)
 
 
 def main():
+    """ Main func """
     parser = OptionParser()
-    parser.add_option("-d", "--dotignore", dest = "dot_ignore",
-            help = "Exclude files, given by .dotignore file")
-    parser.add_option("-a", "--ask", dest = "ask", default = False,
-            action = "store_true", help = "Ask if you want the " +
-            "files to be linked or unlinked")
-    parser.add_option("-u", "--unlink", dest = "unlink", default = False,
-            action = "store_true", help = "Remove the previous links")
-    parser.add_option("-p", "--preview", dest = "preview", default = False,
-            action = "store_true", help = "Preview the actions before they happen")
-    parser.add_option("-g", "--generate-dotignore", dest = "generate", default = False,
-            action = "store_true", help = "Generate a .dotignore file for your folder")
+    parser.add_option("-d",
+                      "--dotignore",
+                      dest="dot_ignore",
+                      help="Exclude files, given by .dotignore file")
+    parser.add_option("-a",
+                      "--ask",
+                      default=False,
+                      action="store_true",
+                      help="Ask if you want the " \
+                              "files to be linked or unlinked")
+    parser.add_option("-u",
+                      "--unlink",
+                      default=False,
+                      action="store_true",
+                      help="Remove the previous links")
+    parser.add_option("-p",
+                      "--preview",
+                      default=False,
+                      action="store_true",
+                      help="Preview the actions before they happen")
+    parser.add_option("-g",
+                      "--generate-dotignore",
+                      dest="generate",
+                      default=False,
+                      action="store_true",
+                      help="Generate a .dotignore file for your folder")
 
     (options, args) = parser.parse_args()
 
@@ -162,22 +178,21 @@ def main():
             print "Now exiting"
             return
 
-    d = Dot(git_dir)
-    d.get_files(dotignore)
+    dot = Dot(git_dir)
+    dot.get_files(dotignore)
 
     if options.generate:
-        d.generate_dotignore(git_dir)
+        dot.generate_dotignore(git_dir)
         return
 
     elif options.preview:
-        d.preview(options.unlink)
+        dot.preview(options.unlink)
 
     elif options.unlink:
-        d.unlink(options.ask)
+        dot.unlink(options.ask)
 
     else:
-        d.link(options.ask)
+        dot.link(options.ask)
 
 if __name__ == "__main__":
     main()
-

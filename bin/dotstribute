@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+""" Dotstribute
+
+Symlink files from a version controlled directory
+to your home directory.
+
+"""
+
+import argparse
+import os
+
+from dotstribute import (
+    # generate_dotignore,
+    get_files,
+    # link,
+    # preview,
+    # unlink,
+)
+
+def parse_args():
+    # types: () -> ArgumentParser
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('symlink_from',
+                        help='The folder you want to symlink from')
+    parser.add_argument('-a',
+                       '--ask',
+                       default=False,
+                       action='store_true',
+                       help='Ask if you want the ' \
+                           'files to be linked or unlinked')
+   parser.add_argument('-d',
+                       '--dotignore',
+                       help='Exclude files, given by .dotignore file')
+   parser.add_argument('-g',
+                       '--generate-dotignore',
+                       dest='generate',
+                       default=False,
+                       action='store_true',
+                       help='Generate a .dotignore file for your folder')
+   parser.add_argument('-o',
+                       '--overwrite',
+                       default=False,
+                       action='store_true',
+                       help='Overwrite the files if they are already there')
+   parser.add_argument('-p',
+                       '--preview',
+                       default=False,
+                       action='store_true',
+                       help='Preview the actions before they happen')
+    parser.add_argument('-u',
+                        '--unlink',
+                        default=False,
+                        action='store_true',
+                        help='Remove the previous links')
+
+    return parser.parse_args()
+
+
+def main():
+    """ driver function """
+
+    args = parse_args()
+    dotignore = args.dotignore or '.dotignore'
+
+    symlink_from = args.symlink_from
+
+    # TODO: make this command line option in the future
+    symlink_to = os.environ['HOME']
+
+    symlinks = get_files(symlink_from, symlink_to, dotignore)
+
+    # place a dotignore file in the version
+    # control directory with sane defaults
+    if args.generate:
+        dot.generate_dotignore(symlink_from)
+
+    # elif args.preview:
+        # dot.preview(args.unlink)
+
+    # elif args.unlink:
+        # dot.unlink(args.ask)
+
+    # else:
+        # dot.link(args.ask)
+
+if __name__ == '__main__':
+    main()
