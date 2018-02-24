@@ -12,7 +12,7 @@ setup(
     url='https://github.com/ProfOak/dotstribute',
     packages=find_packages(),
     scripts=[
-        'bin/dotstribute',
+        'dotstribute.py',
     ],
     keywords=['dotfile github version control'],
 )
