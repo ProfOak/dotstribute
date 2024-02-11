@@ -51,6 +51,15 @@ func isSymlink(symlinkPath string) bool {
 	return f.Mode()&os.ModeSymlink != 0
 }
 
+func isHomeDir(directory string) bool {
+	directory = filepath.Clean(directory)
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalln("Unable to find the home directory.")
+	}
+	return directory == home
+}
+
 func getDotFiles(starting string, ignoredFiles []string) []string {
 	var dotfiles []string
 	err := filepath.WalkDir(starting, func(path string, info fs.DirEntry, err error) error {
@@ -117,7 +126,9 @@ func symlink(dotfile string, preview bool, ask bool) {
 	}
 }
 
-// unsymlink will remove symlinked files from a user's home directory.
+// unsymlink will remove symlinked files from a user's home directory. It also
+// removes the empty directory above any symlinked files if there are no more
+// files stored there.
 func unsymlink(dotfile string, preview bool, ask bool) {
 	var err error
 	symlinkPath := homePath(dotfile)
@@ -141,6 +152,25 @@ func unsymlink(dotfile string, preview bool, ask bool) {
 			log.Println("Unable to remove the symlink")
 			log.Fatalln(err)
 		}
+	}
+
+	// Delete the current directory if there are no more files in it.
+	dir, _ := filepath.Split(symlinkPath)
+	if isHomeDir(dir) {
+		return
+	}
+
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(files) > 0 {
+		return
+	}
+	fmt.Printf("Removing: %s\n", dir)
+	err = os.Remove(dir)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
