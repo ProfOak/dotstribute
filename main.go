@@ -42,6 +42,15 @@ func shouldIgnore(path string, ignoredFiles []string) bool {
 	return false
 }
 
+func isSymlink(symlinkPath string) bool {
+	// Stat checks original file, Lstat checks link itself.
+	f, err := os.Lstat(symlinkPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return f.Mode()&os.ModeSymlink != 0
+}
+
 func getDotFiles(starting string, ignoredFiles []string) []string {
 	var dotfiles []string
 	err := filepath.WalkDir(starting, func(path string, info fs.DirEntry, err error) error {
@@ -108,14 +117,17 @@ func symlink(dotfile string, preview bool, ask bool) {
 	}
 }
 
+// unsymlink will remove symlinked files from a user's home directory.
 func unsymlink(dotfile string, preview bool, ask bool) {
+	var err error
 	symlinkPath := homePath(dotfile)
-	dotfile, err := filepath.Abs(dotfile)
-	if err != nil {
-		log.Fatalln(err)
-	}
+
 	if _, err := os.Stat(symlinkPath); os.IsNotExist(err) {
 		log.Printf("Skipping: No symlink '%s' in home directory.", symlinkPath)
+		return
+	}
+	if !isSymlink(symlinkPath) {
+		fmt.Printf("%s is not a symlink, ignoring.\n", symlinkPath)
 		return
 	}
 	fmt.Printf("Removing: %s\n", symlinkPath)
