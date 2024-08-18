@@ -33,6 +33,15 @@ func getIgnoredFiles(dotignoreFile string) []string {
 	return ignoredFiles
 }
 
+func resolvePaths(path string) (string, string) {
+	symlinkPath := homePath(path)
+	dotfilePath, err := filepath.Abs(path)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return symlinkPath, dotfilePath
+}
+
 func shouldIgnore(path string, ignoredFiles []string) bool {
 	for _, ignoredFile := range ignoredFiles {
 		if strings.HasPrefix(path, ignoredFile) {
@@ -42,13 +51,36 @@ func shouldIgnore(path string, ignoredFiles []string) bool {
 	return false
 }
 
-func isSymlink(symlinkPath string) bool {
+func fileExists(path string) bool {
+	if _, err := os.Stat(path); !errors.Is(err, os.ErrNotExist) {
+		return true
+	}
+	return false
+}
+
+func isDir(path string) bool {
+	if info, err := os.Stat(path); err != nil && info.IsDir() {
+		return true
+	}
+	return false
+}
+
+func isCorrectSymlink(symlinkPath, realpath string) bool {
 	// Stat checks original file, Lstat checks link itself.
 	f, err := os.Lstat(symlinkPath)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return f.Mode()&os.ModeSymlink != 0
+
+	if f.Mode()&os.ModeSymlink == 0 {
+		return false
+	}
+
+	if path, err := filepath.EvalSymlinks(symlinkPath); err == nil && path != realpath {
+		return false
+	}
+
+	return true
 }
 
 func isHomeDir(directory string) bool {
@@ -101,24 +133,19 @@ func homePath(dotfile string) string {
 	return filepath.Join(home, dotfile)
 }
 
-func symlink(dotfile string, preview bool, ask bool) {
-	symlinkPath := homePath(dotfile)
-	dotfile, err := filepath.Abs(dotfile)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fmt.Printf("%s -> %s\n", dotfile, symlinkPath)
-	if preview {
-		return
-	}
-	if _, err := os.Stat(symlinkPath); !errors.Is(err, os.ErrNotExist) {
-		fmt.Println("File already exists")
+func symlink(symlinkPath, dotfile string, preview bool, ask bool) {
+	if fileExists(symlinkPath) {
+		if isCorrectSymlink(symlinkPath, dotfile) {
+			fmt.Println("File already symlinked")
+		} else {
+			fmt.Println("Cannot create symlink")
+		}
 		return
 	}
 
 	if !ask || shouldContinue() {
 		dir, _ := filepath.Split(symlinkPath)
-		err = os.MkdirAll(dir, os.ModePerm)
+		err := os.MkdirAll(dir, os.ModePerm)
 		if err != nil {
 			log.Println("Unable to create the directory needed.")
 			log.Fatalln(err)
@@ -134,25 +161,20 @@ func symlink(dotfile string, preview bool, ask bool) {
 // unsymlink will remove symlinked files from a user's home directory. It also
 // removes the empty directory above any symlinked files if there are no more
 // files stored there.
-func unsymlink(dotfile string, preview bool, ask bool) {
-	var err error
-	symlinkPath := homePath(dotfile)
-
+func unsymlink(symlinkPath, dotfile string, preview bool, ask bool) {
 	if _, err := os.Stat(symlinkPath); os.IsNotExist(err) {
 		log.Printf("Skipping: No symlink '%s' in home directory.", symlinkPath)
 		return
 	}
-	if !isSymlink(symlinkPath) {
+	if !isCorrectSymlink(symlinkPath, dotfile) {
+		fmt.Println(symlinkPath, dotfile)
 		fmt.Printf("%s is not a symlink, ignoring.\n", symlinkPath)
 		return
 	}
 	fmt.Printf("Removing: %s\n", symlinkPath)
-	if preview {
-		return
-	}
 
 	if !ask || shouldContinue() {
-		err = os.Remove(symlinkPath)
+		err := os.Remove(symlinkPath)
 		if err != nil {
 			log.Println("Unable to remove the symlink")
 			log.Fatalln(err)
@@ -182,12 +204,24 @@ func unsymlink(dotfile string, preview bool, ask bool) {
 func shouldContinue() bool {
 	var choice string
 	fmt.Print("Continue? (y/N): ")
-	fmt.Scanln(&choice)
+	_, err := fmt.Scanln(&choice)
+	if err != nil {
+		return false
+	}
 	return strings.ToLower(choice) == "y"
 }
 
 func main() {
+	const (
+		emojiFile   = "📄"
+		emojiFolder = "📁"
+		emojiLink   = "🔗"
+		emojiShipit = "🚀"
+		emojiError  = "❌"
+	)
+
 	var (
+		emoji    string
 		generate bool
 		preview  bool
 		unlink   bool
@@ -205,12 +239,30 @@ func main() {
 	}
 
 	if generate {
+		fmt.Println("TODO")
 		return
 	}
 
 	ignoredFiles := getIgnoredFiles(".dotignore")
 	dotfiles := getDotFiles(".", ignoredFiles)
-	for _, f := range dotfiles {
-		action(f, preview, ask)
+	for _, dotfile := range dotfiles {
+		symlinkPath, dotfilePath := resolvePaths(dotfile)
+		if fileExists(symlinkPath) {
+			if isDir(symlinkPath) {
+				emoji = emojiFolder
+			} else if isCorrectSymlink(symlinkPath, dotfilePath) {
+				emoji = emojiLink
+			} else {
+				emoji = emojiError
+			}
+		} else {
+			emoji = emojiShipit
+		}
+
+		fmt.Printf("%s %s\n", emoji, dotfile)
+		if preview {
+			continue
+		}
+		action(symlinkPath, dotfilePath, preview, ask)
 	}
 }
