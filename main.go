@@ -79,9 +79,14 @@ func getDotFiles(starting string, ignoredFiles []string) []string {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	// First one is `.` and we don't want to skip it because filepath.SkipDir
-	// will exclude the whole path under the current working directory.
-	return dotfiles[1:]
+	// Previously the first element was the current working directory because
+	// of how the skipping logic worked but it seems to be working correctly
+	// now. I've kept the check in case it ever happens again.
+	if dotfiles[0] == "." {
+		dotfiles = dotfiles[1:]
+	}
+
+	return dotfiles
 }
 
 func homePath(dotfile string) string {
