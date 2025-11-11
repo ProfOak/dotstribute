@@ -220,12 +220,10 @@ func main() {
 
 	var (
 		emoji    string
-		generate bool
 		preview  bool
 		unlink   bool
 		ask      bool
 	)
-	flag.BoolVarP(&generate, "generate", "g", false, "")
 	flag.BoolVarP(&preview, "preview", "p", false, "")
 	flag.BoolVarP(&unlink, "unlink", "u", false, "")
 	flag.BoolVarP(&ask, "ask", "a", false, "")
@@ -234,11 +232,6 @@ func main() {
 	action := symlink
 	if unlink {
 		action = unsymlink
-	}
-
-	if generate {
-		fmt.Println("TODO")
-		return
 	}
 
 	ignoredFiles := getIgnoredFiles(".dotignore")

@@ -36,7 +36,6 @@ Usage:
 > dotstribute --help
 Usage of dotstribute:
   -a, --ask
-  -g, --generate
   -p, --preview
   -u, --unlink
 ```
