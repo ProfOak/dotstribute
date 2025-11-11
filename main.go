@@ -135,10 +135,8 @@ func homePath(dotfile string) string {
 
 func symlink(symlinkPath, dotfile string, preview bool, ask bool) {
 	if fileExists(symlinkPath) {
-		if isCorrectSymlink(symlinkPath, dotfile) {
-			fmt.Println("File already symlinked")
-		} else {
-			fmt.Println("Cannot create symlink")
+		if !isCorrectSymlink(symlinkPath, dotfile) {
+			fmt.Print(" - Cannot create symlink")
 		}
 		return
 	}
@@ -203,7 +201,7 @@ func unsymlink(symlinkPath, dotfile string, preview bool, ask bool) {
 
 func shouldContinue() bool {
 	var choice string
-	fmt.Print("Continue? (y/N): ")
+	fmt.Print(" - Continue? (y/N): ")
 	_, err := fmt.Scanln(&choice)
 	if err != nil {
 		return false
@@ -259,10 +257,11 @@ func main() {
 			emoji = emojiShipit
 		}
 
-		fmt.Printf("%s %s\n", emoji, dotfile)
+		fmt.Printf("%s %s", emoji, dotfile)
 		if preview {
 			continue
 		}
 		action(symlinkPath, dotfilePath, preview, ask)
+		fmt.Println("")
 	}
 }
