@@ -6,8 +6,10 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	flag "github.com/spf13/pflag"
 )
@@ -201,10 +203,13 @@ func unsymlink(symlinkPath, dotfile string, preview bool, ask bool) {
 
 func shouldContinue() bool {
 	var choice string
-	fmt.Print(" - Continue? (y/N): ")
+	fmt.Print(" - Continue? (y/N/q): ")
 	_, err := fmt.Scanln(&choice)
 	if err != nil {
 		return false
+	}
+	if strings.ToLower(choice) == "q" {
+		os.Exit(0)
 	}
 	return strings.ToLower(choice) == "y"
 }
@@ -219,15 +224,22 @@ func main() {
 	)
 
 	var (
-		emoji    string
-		preview  bool
-		unlink   bool
-		ask      bool
+		emoji   string
+		preview bool
+		unlink  bool
+		ask     bool
 	)
 	flag.BoolVarP(&preview, "preview", "p", false, "")
 	flag.BoolVarP(&unlink, "unlink", "u", false, "")
 	flag.BoolVarP(&ask, "ask", "a", false, "")
 	flag.Parse()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		os.Exit(0)
+	}()
 
 	action := symlink
 	if unlink {
